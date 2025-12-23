@@ -1,23 +1,31 @@
 
-# Version 14 updated: 12.22.25
+# Version 15 updated: 12.23.25
 # Project objective
 # Provided services
+# Production-ready
 
-# .\myenv\Scripts\activate.bat (Windows)
+# .\myenv\Scripts\activate (Windows/CLI)
 # . ienv/bin/activate : run venv (macOS)
 # pip install -r requirements.txt
 
-
+import os
 import streamlit as st
 import pandas as pd
-# edit 1
-# import os
 import matplotlib.pyplot as plt
 import numpy as np
 import gspread
 from google.oauth2.service_account import Credentials
-
-
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import Image, Table, TableStyle, Spacer
+from reportlab.lib import colors
+from datetime import datetime
+from reportlab.platypus import Image
+from reportlab.lib.units import cm
 
 # -------------------------------
 # Default setting & DATA FILE
@@ -25,39 +33,7 @@ from google.oauth2.service_account import Credentials
 plt.rcParams['font.family'] = 'Tahoma'
 plt.rcParams['axes.unicode_minus'] = False
 
-
-# edit 2
-# DATA_FILE = "user_data.csv"
-# if not os.path.exists(DATA_FILE):
-#     pd.DataFrame(columns=[
-#         "ชื่อ-สกุล", "เพศ", "ระดับชั้น",
-#         "GPA ม.1 ภาคเรียนที่ 1", "GPA ม.1 ภาคเรียนที่ 2",
-#         "GPA ม.2 ภาคเรียนที่ 1", "GPA ม.2 ภาคเรียนที่ 2",
-#         "GPA ม.3 ภาคเรียนที่ 1", "GPA ม.3 ภาคเรียนที่ 2",
-#         "เกรดเฉลี่ยสะสม (GPAX 5 เทอม)","เกรดเฉลี่ยสะสม (GPAX 6 เทอม)","ความสนใจ", "ผลแนะแนว"
-#     ]).to_csv(DATA_FILE, index=False, encoding='utf-8-sig')
-
 st.set_page_config(page_title="Academic Guidance System", page_icon="images/icon2.png", layout="centered")
-
-# -------------------------------
-# UI and styles
-# -------------------------------
-# def get_gsheet():
-#     scope = [
-#         "https://www.googleapis.com/auth/spreadsheets",
-#         "https://www.googleapis.com/auth/drive"
-#     ]
-
-#     creds = Credentials.from_service_account_info(
-#         st.secrets["gcp_service_account"],
-#         scopes=scope
-#     )
-
-#     client = gspread.authorize(creds)   
-#     spreadsheet = client.open("Academic_Guidance_Dataset")
-#     sheet = spreadsheet.sheet1
-
-#     return sheet
 
 @st.cache_resource
 def get_gsheet():
@@ -75,6 +51,11 @@ def get_gsheet():
     spreadsheet = client.open("Academic_Guidance_Dataset")
 
     return spreadsheet.sheet1
+
+def register_thai_font():
+    pdfmetrics.registerFont(
+        TTFont("THSarabun", "fonts/THSarabunNew.ttf")
+    )
 
 def fmt(val):
     return f"{val:.2f}" if val is not None else ""
@@ -626,8 +607,8 @@ def plot_gpa_gpax_bar(gpa_list, gpax_list, labels):
             plt.text(x[i]+width/2, gpax_vals[i]+0.05, f"{gpax_vals[i]:.2f}", ha='center', va='bottom', fontweight='bold')
 
     plt.ylim(0,4.0)
-    plt.ylabel("GPA / GPAX")
-    plt.title("GPA และ GPAX รายเทอม")
+    plt.ylabel("GPA and GPAX")
+    plt.title("GPA and cumulative GPAX for each term")
     plt.xticks(x, labels, rotation=45)
     plt.subplots_adjust(left=0.15, right=0.95)
     plt.legend()
@@ -649,11 +630,190 @@ def rule_based_advice(interests):
         return "แนะนำ: บัญชี / บริหารธุรกิจ / รัฐศาสตร์"
     else:
         return "ยังไม่สามารถระบุแนวทางได้!"
+    
+# from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table
+# from reportlab.lib.styles import getSampleStyleSheet
+# from reportlab.lib.pagesizes import A4
+
+# def generate_pdf_report(    
+#     filename,
+#     student_id,
+#     name, gender, level,
+#     gpa_list, gpax_5, gpax_6,
+#     interests, advice,
+#     evaluator="ครูอัศวิน สุรวัชโยธิน"
+# ):
+#     gpax_list = [None, None, None, None, gpax_5, gpax_6]  # 6 เทอม
+
+#     register_thai_font()
+#     doc = SimpleDocTemplate(filename, pagesize=A4)
+#     styles = getSampleStyleSheet()
+#     styles.add(ParagraphStyle(
+#         name="Thai",
+#         fontName="THSarabun",
+#         fontSize=14,
+#         leading=18
+#     ))
+#     styles.add(ParagraphStyle(
+#         name="ThaiTitle",
+#         fontName="THSarabun",
+#         fontSize=20,
+#         leading=24,
+#         alignment=1  # center
+#     ))
+#     elements = []
+#     logo_path = os.path.join("assets", "logo.png")
+
+#     if os.path.exists(logo_path):
+#         logo = Image(logo_path, width=2.5*cm, height=2.5*cm)
+#         logo.hAlign = "CENTER"
+#         elements.append(logo)
+#         elements.append(Spacer(1, 12))
+#     else:
+#         print("⚠️ ไม่พบไฟล์โลโก้:", logo_path)
+#     elements.append(Paragraph("<b>Academic Guidance Report</b>", styles["ThaiTitle"]))
+#     elements.append(Spacer(1, 12))
+
+#     # ===============================
+#     # 🔹 วันที่ + ผู้ประเมิน
+#     # ===============================
+#     today = datetime.now().strftime("%d/%m/%Y")
+
+#     elements.append(Paragraph(f"วันที่ประเมิน: {today}", styles["Thai"]))
+#     elements.append(Paragraph(f"ผู้ประเมิน: {evaluator}", styles["Thai"]))
+#     elements.append(Spacer(1, 12))
+
+#     elements.append(Paragraph(f"รหัสนักเรียน: {student_id}", styles["Thai"]))
+#     elements.append(Paragraph(f"ชื่อ-สกุล: {name}", styles["Thai"]))
+#     elements.append(Paragraph(f"เพศ: {gender}", styles["Thai"]))
+#     elements.append(Paragraph(f"ระดับชั้น: {level}", styles["Thai"]))
+#     elements.append(Spacer(1, 12))
+
+
+#     # Report
+#     table_data = [["ภาคเรียน", "GPA", "GPAX"]]
+#     labels = [
+#         "ม.1/1", "ม.1/2",
+#         "ม.2/1", "ม.2/2",
+#         "ม.3/1", "ม.3/2"
+#     ]
+#     for i, lbl in enumerate(labels):
+#         gpa_val = gpa_list[i] if gpa_list[i] is not None else "-"
+#         gpax_val = gpax_list[i] if gpax_list[i] is not None else "-"       
+#         gpa_str = f"{gpa_val:.2f}" if isinstance(gpa_val, (float, int)) else gpa_val
+#         gpax_str = f"{gpax_val:.2f}" if isinstance(gpax_val, (float, int)) else gpax_val
+#         table_data.append([lbl, gpa_str, gpax_str])
+
+#     table = Table(table_data, hAlign="LEFT")
+#     table.setStyle(TableStyle([
+#         ("FONTNAME", (0, 0), (-1, -1), "THSarabun"),
+#         ("FONTSIZE", (0, 0), (-1, -1), 14),
+#         ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+#         ("ALIGN", (0, 0), (-1, 0), "CENTER"),
+#         ("ALIGN", (1, 1), (-1, -1), "CENTER"),
+#         ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+#         ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+#         ("TOPPADDING", (0, 0), (-1, -1), 6),
+#     ]))
+#     elements.append(table)
+#     elements.append(Spacer(1, 12))
+
+#     if gpax_5 is not None:
+#         elements.append(Paragraph(f"GPAX 5 เทอม: {gpax_5:.2f}", styles["Thai"]))
+#     if gpax_6 is not None:
+#         elements.append(Paragraph(f"GPAX 6 เทอม: {gpax_6:.2f}", styles["Thai"]))
+
+#     elements.append(Spacer(1, 12))
+#     elements.append(Paragraph(f"ความสนใจ: {', '.join(interests) if interests else '-'}", styles["Thai"]))
+#     elements.append(Paragraph(f"ผลแนะแนว: {advice if advice else '-'}", styles["Thai"]))
+
+#     doc.build(elements)
+
+def generate_pdf_report(
+    filename,
+    student_id,
+    name,
+    gender,
+    level,
+    gpa_list,        # list ของ GPA 6 เทอม
+    gpax_list,       # list ของ GPAX 6 เทอม
+    interests,
+    advice,
+    evaluator="ครูอัศวิน สุรวัชโยธิน"
+):
+    register_thai_font()
+    doc = SimpleDocTemplate(filename, pagesize=A4)
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name="Thai", fontName="THSarabun", fontSize=14, leading=18))
+    styles.add(ParagraphStyle(name="ThaiTitle", fontName="THSarabun", fontSize=20, leading=24, alignment=1))
+
+    elements = []
+
+    # Logo (ถ้ามี)
+    logo_path = os.path.join("assets", "logo.png")
+    if os.path.exists(logo_path):
+        logo = Image(logo_path, width=2.5*cm, height=2.5*cm)
+        logo.hAlign = "CENTER"
+        elements.append(logo)
+        elements.append(Spacer(1, 12))
+
+    # Title
+    elements.append(Paragraph("<b>Academic Guidance Report</b>", styles["ThaiTitle"]))
+    elements.append(Spacer(1, 12))
+
+    # วันที่และผู้ประเมิน
+    today = datetime.now().strftime("%d/%m/%Y")
+    elements.append(Paragraph(f"วันที่ประเมิน: {today}", styles["Thai"]))
+    elements.append(Paragraph(f"ผู้ประเมิน: {evaluator}", styles["Thai"]))
+    elements.append(Spacer(1, 12))
+
+    # ข้อมูลนักเรียน
+    elements.append(Paragraph(f"รหัสนักเรียน: {student_id}", styles["Thai"]))
+    elements.append(Paragraph(f"ชื่อ-สกุล: {name}", styles["Thai"]))
+    elements.append(Paragraph(f"เพศ: {gender}", styles["Thai"]))
+    elements.append(Paragraph(f"ระดับชั้น: {level}", styles["Thai"]))
+    elements.append(Spacer(1, 12))
+
+    # ===============================
+    # GPA & GPAX Wide Table
+    # ===============================
+    labels = ["ม.1/1", "ม.1/2", "ม.2/1", "ม.2/2", "ม.3/1", "ม.3/2"]
+    table_data = [["ภาคเรียน", "GPA", "GPAX"]]
+
+    for i, lbl in enumerate(labels):
+        gpa_val = gpa_list[i] if i < len(gpa_list) else None
+        gpax_val = gpax_list[i] if i < len(gpax_list) else None
+
+        gpa_str = f"{gpa_val:.2f}" if isinstance(gpa_val, (float, int)) else "-"
+        gpax_str = f"{gpax_val:.2f}" if isinstance(gpax_val, (float, int)) else "-"
+        table_data.append([lbl, gpa_str, gpax_str])
+
+    table = Table(table_data, hAlign="LEFT")
+    table.setStyle(TableStyle([
+        ("FONTNAME", (0, 0), (-1, -1), "THSarabun"),
+        ("FONTSIZE", (0, 0), (-1, -1), 14),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+        ("ALIGN", (0, 0), (-1, 0), "CENTER"),
+        ("ALIGN", (1, 1), (-1, -1), "CENTER"),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(table)
+    elements.append(Spacer(1, 12))
+
+    # ความสนใจและผลแนะแนว
+    elements.append(Paragraph(f"ความสนใจ: {', '.join(interests) if interests else '-'}", styles["Thai"]))
+    elements.append(Paragraph(f"ผลแนะแนว: {advice if advice else '-'}", styles["Thai"]))
+
+    doc.build(elements)
+
 
 def main():
     setup_ui()
     sheet = get_gsheet()
     interests = []
+    advice = ""
 
     # Subjects data
     subjects_s1_m1, extra_subjects_s1_m1 = get_subjects_s1_m1()
@@ -664,28 +824,35 @@ def main():
     subjects_s2_m3, extra_subjects_s2_m3 = get_subjects_s2_m3()
 
     # Part 1: User profile
+    # 1.Header 
     st.markdown('<br><span style="color:#0869ed; font-weight:bold; font-size:20px;">ส่วนที่ 1: ข้อมูลประจำตัว</span>', unsafe_allow_html=True)
    
     st.markdown("""
     <hr style="border: 2px solid #C9CDCF; border-radius: 5px; margin-top:0; margin-bottom:5px;">
     """, unsafe_allow_html=True)
 
+    # 2.studentID
+    st.markdown("""
+    <div style="display: inline-block; color:0D3B66; font-weight:normal; font-size:18px; margin-right:10px;">รหัสนักเรียน</div>
+    """, unsafe_allow_html=True)
+    student_id = st.text_input("",key="student_id_input")
+
 
     st.markdown("""
     <div style="display: inline-block; color:0D3B66; font-weight:normal; font-size:18px; margin-right:10px;">ชื่อ-นามสกุล</div>
     """, unsafe_allow_html=True)
-    name = st.text_input("","")
+    name = st.text_input("",key="student_name_input")
 
     st.markdown("""
     <div style="display: inline-block; color:0D3B66; font-weight:normal; font-size:18px; margin-right:10px;">เพศ</div>
     """, unsafe_allow_html=True)
-    gender = st.selectbox("", ["", "ชาย", "หญิง", "อื่น ๆ"], index=0)
+    gender = st.selectbox("", ["", "ชาย", "หญิง", "อื่น ๆ"], key="gender_select", index=0)
 
     
     st.markdown("""
     <div style="display: inline-block; color:0D3B66; font-weight:normal; font-size:18px; margin-right:10px;">ระดับชั้น</div>
     """, unsafe_allow_html=True)
-    level = st.selectbox("", [""] + ["ม.1/1", "ม.1/2", "ม.1/3", "ม.1/4", "ม.2/1", "ม.2/2", "ม.2/3", "ม.2/4", "ม.3/1", "ม.3/2", "ม.3/3", "ม.3/4"], index=0)
+    level = st.selectbox("", [""] + ["ม.1/1", "ม.1/2", "ม.1/3", "ม.1/4", "ม.2/1", "ม.2/2", "ม.2/3", "ม.2/4", "ม.3/1", "ม.3/2", "ม.3/3", "ม.3/4"], key="level_select", index=0)
 
     st.markdown('<br><span style="color:#0869ed; font-weight:bold; font-size:20px">ส่วนที่ 2: คะแนนของคุณ</span>', unsafe_allow_html=True)
     st.markdown("""
@@ -748,7 +915,8 @@ def main():
     # -------------------------------
     # แสดงกราฟ GPAX
     # -------------------------------
-    semester_labels_list = ["ม.1 เทอม1", "ม.1 เทอม2", "ม.2 เทอม1", "ม.2 เทอม2", "ม.3 เทอม1", "ม.3 เทอม2"]
+    # semester_labels_list = ["ม.1 เทอม1", "ม.1 เทอม2", "ม.2 เทอม1", "ม.2 เทอม2", "ม.3 เทอม1", "ม.3 เทอม2"]
+    semester_labels_list = ["M1 TERM 1", "M1 TERM  2", "M2 TERM 1", "M2 TERM 2", "M3 TERM 1", "M3 TERM 2"]
     summary_text = ""
 
     for i, gpa in enumerate(gpa_list):
@@ -918,13 +1086,6 @@ def main():
             subject_name = prefix_name_map.get(pfx, pfx)
             st.write(f"• กลุ่มรายวิชา {subject_name}:   ได้ค่าเฉลี่ย {val:.2f}")
 
-    # Save button: จะเปิดใช้งานเฉพาะเมื่อกรอกครบทั้งสองภาคเรียนและข้อมูลประจำตัวครบ
-    # save_enabled = bool(
-    #     name and gender and level
-    #     and filled_s1_m1 and filled_s2_m1 and filled_s1_m2 and filled_s2_m2 and filled_s1_m3
-    #     and gpa_s1_m1 is not None and gpa_s2_m1 is not None and gpa_s1_m2 is not None and gpa_s2_m2 is not None and gpa_s1_m3 is not None
-    #     and gpa_s2_m3 is not None and gpax_5 is not None and gpax_6 is not None
-    # )
 
     save_enabled = bool(
         name and gender and level and has_any_gpa
@@ -953,43 +1114,12 @@ def main():
     </style>
     """, unsafe_allow_html=True)
 
-    if st.button("💾 บันทึกข้อมูล", disabled=not save_enabled):
-        # edit 3
-        # df = pd.read_csv(DATA_FILE)
-        # ถ้า gpax ยัง None จะเก็บเป็นช่องว่าง (แต่ save_enabled ปกติจะเป็น False ทำให้มาถึงตรงนี้ไม่ได้)
+    if st.button("💾 Saved info", disabled=not save_enabled):    
         gpax5_str = f"{gpax_5:.2f}" if gpax_5 is not None else ""
         gpax6_str = f"{gpax_6:.2f}" if gpax_6 is not None else ""
-        # new_row = {
-        #     "ชื่อ-สกุล": name,
-        #     "เพศ": gender,
-        #     "ระดับชั้น": level,
-        #     "GPA ม.1 ภาคเรียนที่ 1": f"{gpa_s1_m1:.2f}",
-        #     "GPA ม.1 ภาคเรียนที่ 2": f"{gpa_s2_m1:.2f}",
-        #     "GPA ม.2 ภาคเรียนที่ 1": f"{gpa_s1_m2:.2f}",
-        #     "GPA ม.2 ภาคเรียนที่ 2": f"{gpa_s2_m2:.2f}",
-        #     "GPA ม.3 ภาคเรียนที่ 1": f"{gpa_s1_m3:.2f}",
-        #     "GPA ม.3 ภาคเรียนที่ 2": f"{gpa_s2_m3:.2f}",
-        #     "เกรดเฉลี่ยสะสม (GPAX 5 เทอม)": gpax5_str,
-        #     "เกรดเฉลี่ยสะสม (GPAX 6 เทอม)": gpax6_str,
-        #     "ความสนใจ": ", ".join(interests),  # convert list to string
-        #     "ผลแนะแนว": advice if interests else ""
-        # }
-        # row = [
-        #     name,
-        #     gender,
-        #     level,
-        #     f"{gpa_s1_m1:.2f}",
-        #     f"{gpa_s2_m1:.2f}",
-        #     f"{gpa_s1_m2:.2f}",
-        #     f"{gpa_s2_m2:.2f}",
-        #     f"{gpa_s1_m3:.2f}",
-        #     f"{gpa_s2_m3:.2f}",
-        #     gpax5_str,
-        #     gpax6_str,
-        #     ", ".join(interests),
-        #     advice if interests else ""
-        # ]
+    
         row = [
+            student_id,
             name,
             gender,
             level,
@@ -1010,9 +1140,53 @@ def main():
         # df.to_csv(DATA_FILE, index=False, encoding='utf-8-sig')
         st.success("✅ บันทึกข้อมูลเรียบร้อยแล้ว")
     else:
-        if not save_enabled:
-            # st.info("⚠️ กรุณากรอกข้อมูลครบทุกช่อง (รวมทั้งกรอกเกรดครบทั้ง 5 ภาคเรียน) ก่อนบันทึก")
-            st.info("⚠️ กรุณากรอกข้อมูลครบทุกช่องก่อนบันทึก")
+        if not save_enabled:            
+            st.info("ℹ️ กรุณากรอกข้อมูลครบทุกช่องก่อนบันทึก")
+    
+    # ===============================
+    # Export / Report Section
+    # ===============================
+    # st.markdown("---")
+    # st.subheader("📄 Export รายงาน")
+    can_export = bool(
+        name
+        and has_any_gpa
+        # and advice
+    )
+    gpax_1 = gpax_s1_m1 or None
+    gpax_2 = gpax_s2_m1 or None
+    gpax_3 = gpax_s1_m2 or None
+    gpax_4 = gpax_s2_m2 or None
+    gpax_5 = gpax_s1_m3 or None
+    gpax_6 = gpax_s2_m3 or None
+    gpax_list = [gpax_1, gpax_2, gpax_3, gpax_4, gpax_5, gpax_6]
+    gpa_list = [gpa_s1_m1, gpa_s2_m1, gpa_s1_m2, gpa_s2_m2, gpa_s1_m3, gpa_s2_m3]
+
+    if st.button("📄 Export PDF Report", disabled=not can_export):
+        pdf_path = "academic_report.pdf"
+
+        generate_pdf_report(
+            filename=pdf_path,
+            student_id=student_id,
+            name=name,
+            gender=gender,
+            level=level,           
+            gpa_list=gpa_list,
+            gpax_list = gpax_list,          
+            interests=interests,
+            advice=advice
+        )
+
+        with open(pdf_path, "rb") as f:
+            st.download_button(
+                "⬇️ Download PDF",
+                f,
+                file_name="Academic_Guidance_Report.pdf",
+                mime="application/pdf"
+            )
+
+    if not can_export:
+        st.info("ℹ️ กรุณากรอกข้อมูลและประเมินผลให้ครบก่อน Export รายงาน")
 
     # Footer copyright
     st.markdown("""
@@ -1032,7 +1206,7 @@ def main():
         z-index: 1000;
     ">
         <p style='margin: 0;'>ผู้พัฒนาและปรับปรุงระบบวิเคราะห์แนวทางการศึกษาตามความสนใจของผู้เรียน: <strong>ครูอัศวิน สุรวัชโยธิน</strong></p>
-        <p style='margin: 0;'>Guidance Academic System 1.2.0 ได้รับการปรับปรุงล่าสุด 22.12.25 : เพื่อเพิ่มประสิทธิภาพและความถูกต้องของคำแนะนำ</p>               
+        <p style='margin: 0;'>Guidance Academic Systems 1.2.0 | Last updated : 12.22.25 | เพื่อเพิ่มประสิทธิภาพและความถูกต้องของข้อมูลแนะนำ</p>               
     </div>
     """, unsafe_allow_html=True)
 
