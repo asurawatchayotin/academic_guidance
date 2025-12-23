@@ -1,16 +1,22 @@
 
-# Version 12 updated: 11.30.25
+# Version 14 updated: 12.22.25
 # Project objective
 # Provided services
 
 # .\myenv\Scripts\activate.bat (Windows)
 # . ienv/bin/activate : run venv (macOS)
+# pip install -r requirements.txt
+
 
 import streamlit as st
 import pandas as pd
-import os
+# edit 1
+# import os
 import matplotlib.pyplot as plt
 import numpy as np
+import gspread
+from google.oauth2.service_account import Credentials
+
 
 
 # -------------------------------
@@ -19,21 +25,59 @@ import numpy as np
 plt.rcParams['font.family'] = 'Tahoma'
 plt.rcParams['axes.unicode_minus'] = False
 
-DATA_FILE = "user_data.csv"
-if not os.path.exists(DATA_FILE):
-    pd.DataFrame(columns=[
-        "ชื่อ-สกุล", "เพศ", "ระดับชั้น",
-        "GPA ม.1 ภาคเรียนที่ 1", "GPA ม.1 ภาคเรียนที่ 2",
-        "GPA ม.2 ภาคเรียนที่ 1", "GPA ม.2 ภาคเรียนที่ 2",
-        "GPA ม.3 ภาคเรียนที่ 1", "GPA ม.3 ภาคเรียนที่ 2",
-        "เกรดเฉลี่ยสะสม (GPAX 5 เทอม)","เกรดเฉลี่ยสะสม (GPAX 6 เทอม)","ความสนใจ", "ผลแนะแนว"
-    ]).to_csv(DATA_FILE, index=False, encoding='utf-8-sig')
+
+# edit 2
+# DATA_FILE = "user_data.csv"
+# if not os.path.exists(DATA_FILE):
+#     pd.DataFrame(columns=[
+#         "ชื่อ-สกุล", "เพศ", "ระดับชั้น",
+#         "GPA ม.1 ภาคเรียนที่ 1", "GPA ม.1 ภาคเรียนที่ 2",
+#         "GPA ม.2 ภาคเรียนที่ 1", "GPA ม.2 ภาคเรียนที่ 2",
+#         "GPA ม.3 ภาคเรียนที่ 1", "GPA ม.3 ภาคเรียนที่ 2",
+#         "เกรดเฉลี่ยสะสม (GPAX 5 เทอม)","เกรดเฉลี่ยสะสม (GPAX 6 เทอม)","ความสนใจ", "ผลแนะแนว"
+#     ]).to_csv(DATA_FILE, index=False, encoding='utf-8-sig')
 
 st.set_page_config(page_title="Academic Guidance System", page_icon="images/icon2.png", layout="centered")
 
 # -------------------------------
 # UI and styles
 # -------------------------------
+# def get_gsheet():
+#     scope = [
+#         "https://www.googleapis.com/auth/spreadsheets",
+#         "https://www.googleapis.com/auth/drive"
+#     ]
+
+#     creds = Credentials.from_service_account_info(
+#         st.secrets["gcp_service_account"],
+#         scopes=scope
+#     )
+
+#     client = gspread.authorize(creds)   
+#     spreadsheet = client.open("Academic_Guidance_Dataset")
+#     sheet = spreadsheet.sheet1
+
+#     return sheet
+
+@st.cache_resource
+def get_gsheet():
+    scope = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
+
+    creds = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"],
+        scopes=scope
+    )
+
+    client = gspread.authorize(creds)
+    spreadsheet = client.open("Academic_Guidance_Dataset")
+
+    return spreadsheet.sheet1
+
+def fmt(val):
+    return f"{val:.2f}" if val is not None else ""
 
 def setup_ui():
     st.markdown("""
@@ -594,21 +638,23 @@ def plot_gpa_gpax_bar(gpa_list, gpax_list, labels):
 
 def rule_based_advice(interests):
     if "คอมพิวเตอร์" in interests or "คณิตศาสตร์" in interests:
-        return "🎯 แนะนำ: วิศวกรรมคอมพิวเตอร์ / วิทยาการข้อมูล / เทคโนโลยีสารสนเทศ"
+        return "แนะนำ: วิศวกรรมคอมพิวเตอร์ / วิทยาการข้อมูล / เทคโนโลยีสารสนเทศ"
     elif "วิทยาศาสตร์" in interests:
-        return "🧪 แนะนำ: วิทยาศาสตร์ทั่วไป / เทคโนโลยีชีวภาพ / แพทย์"
+        return "แนะนำ: วิทยาศาสตร์ทั่วไป / เทคโนโลยีชีวภาพ / แพทย์"
     elif "ภาษา" in interests:
-        return "🗣️ แนะนำ: อักษรศาสตร์ / มนุษยศาสตร์ / การท่องเที่ยว"
+        return "แนะนำ: อักษรศาสตร์ / มนุษยศาสตร์ / การท่องเที่ยว"
     elif "ศิลปะ" in interests:
-        return "🎨 แนะนำ: สถาปัตย์ / นิเทศศิลป์ / ออกแบบ"
+        return "แนะนำ: สถาปัตย์ / นิเทศศิลป์ / ออกแบบ"
     elif "ธุรกิจ" in interests or "สังคมศึกษา" in interests:
-        return "💼 แนะนำ: บัญชี / บริหารธุรกิจ / รัฐศาสตร์"
+        return "แนะนำ: บัญชี / บริหารธุรกิจ / รัฐศาสตร์"
     else:
-        return "❓ ยังไม่สามารถระบุแนวทางได้"
+        return "ยังไม่สามารถระบุแนวทางได้!"
 
 def main():
     setup_ui()
-   
+    sheet = get_gsheet()
+    interests = []
+
     # Subjects data
     subjects_s1_m1, extra_subjects_s1_m1 = get_subjects_s1_m1()
     subjects_s2_m1, extra_subjects_s2_m1 = get_subjects_s2_m1()
@@ -748,7 +794,11 @@ def main():
 
     plot_gpa_gpax_bar(gpa_list, gpax_list, semester_labels_list)
 
-
+    has_any_gpa = any(g is not None for g in [
+            gpa_s1_m1, gpa_s2_m1,
+            gpa_s1_m2, gpa_s2_m2,
+            gpa_s1_m3, gpa_s2_m3
+        ])
 
     # Calculate GPAX (5 semester)
     gpax_5 = None
@@ -765,6 +815,8 @@ def main():
             [gpa_s1_m1, gpa_s2_m1, gpa_s1_m2, gpa_s2_m2, gpa_s1_m3, gpa_s2_m3],
             [subs_s1_m1_all, subs_s2_m1_all, subs_s1_m2_all, subs_s2_m2_all, subs_s1_m3_all, subs_s2_m3_all]
         )
+
+        
 
         # -------------------------------
         # Academic plan recommendation
@@ -867,11 +919,15 @@ def main():
             st.write(f"• กลุ่มรายวิชา {subject_name}:   ได้ค่าเฉลี่ย {val:.2f}")
 
     # Save button: จะเปิดใช้งานเฉพาะเมื่อกรอกครบทั้งสองภาคเรียนและข้อมูลประจำตัวครบ
+    # save_enabled = bool(
+    #     name and gender and level
+    #     and filled_s1_m1 and filled_s2_m1 and filled_s1_m2 and filled_s2_m2 and filled_s1_m3
+    #     and gpa_s1_m1 is not None and gpa_s2_m1 is not None and gpa_s1_m2 is not None and gpa_s2_m2 is not None and gpa_s1_m3 is not None
+    #     and gpa_s2_m3 is not None and gpax_5 is not None and gpax_6 is not None
+    # )
+
     save_enabled = bool(
-        name and gender and level
-        and filled_s1_m1 and filled_s2_m1 and filled_s1_m2 and filled_s2_m2 and filled_s1_m3
-        and gpa_s1_m1 is not None and gpa_s2_m1 is not None and gpa_s1_m2 is not None and gpa_s2_m2 is not None and gpa_s1_m3 is not None
-        and gpa_s2_m3 is not None and gpax_5 is not None and gpax_6 is not None
+        name and gender and level and has_any_gpa
     )
 
     # CSS button
@@ -898,27 +954,60 @@ def main():
     """, unsafe_allow_html=True)
 
     if st.button("💾 บันทึกข้อมูล", disabled=not save_enabled):
-        df = pd.read_csv(DATA_FILE)
+        # edit 3
+        # df = pd.read_csv(DATA_FILE)
         # ถ้า gpax ยัง None จะเก็บเป็นช่องว่าง (แต่ save_enabled ปกติจะเป็น False ทำให้มาถึงตรงนี้ไม่ได้)
         gpax5_str = f"{gpax_5:.2f}" if gpax_5 is not None else ""
         gpax6_str = f"{gpax_6:.2f}" if gpax_6 is not None else ""
-        new_row = {
-            "ชื่อ-สกุล": name,
-            "เพศ": gender,
-            "ระดับชั้น": level,
-            "GPA ม.1 ภาคเรียนที่ 1": f"{gpa_s1_m1:.2f}",
-            "GPA ม.1 ภาคเรียนที่ 2": f"{gpa_s2_m1:.2f}",
-            "GPA ม.2 ภาคเรียนที่ 1": f"{gpa_s1_m2:.2f}",
-            "GPA ม.2 ภาคเรียนที่ 2": f"{gpa_s2_m2:.2f}",
-            "GPA ม.3 ภาคเรียนที่ 1": f"{gpa_s1_m3:.2f}",
-            "GPA ม.3 ภาคเรียนที่ 2": f"{gpa_s2_m3:.2f}",
-            "เกรดเฉลี่ยสะสม (GPAX 5 เทอม)": gpax5_str,
-            "เกรดเฉลี่ยสะสม (GPAX 6 เทอม)": gpax6_str,
-            "ความสนใจ": ", ".join(interests),  # convert list to string
-            "ผลแนะแนว": advice if interests else ""
-        }
-        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-        df.to_csv(DATA_FILE, index=False, encoding='utf-8-sig')
+        # new_row = {
+        #     "ชื่อ-สกุล": name,
+        #     "เพศ": gender,
+        #     "ระดับชั้น": level,
+        #     "GPA ม.1 ภาคเรียนที่ 1": f"{gpa_s1_m1:.2f}",
+        #     "GPA ม.1 ภาคเรียนที่ 2": f"{gpa_s2_m1:.2f}",
+        #     "GPA ม.2 ภาคเรียนที่ 1": f"{gpa_s1_m2:.2f}",
+        #     "GPA ม.2 ภาคเรียนที่ 2": f"{gpa_s2_m2:.2f}",
+        #     "GPA ม.3 ภาคเรียนที่ 1": f"{gpa_s1_m3:.2f}",
+        #     "GPA ม.3 ภาคเรียนที่ 2": f"{gpa_s2_m3:.2f}",
+        #     "เกรดเฉลี่ยสะสม (GPAX 5 เทอม)": gpax5_str,
+        #     "เกรดเฉลี่ยสะสม (GPAX 6 เทอม)": gpax6_str,
+        #     "ความสนใจ": ", ".join(interests),  # convert list to string
+        #     "ผลแนะแนว": advice if interests else ""
+        # }
+        # row = [
+        #     name,
+        #     gender,
+        #     level,
+        #     f"{gpa_s1_m1:.2f}",
+        #     f"{gpa_s2_m1:.2f}",
+        #     f"{gpa_s1_m2:.2f}",
+        #     f"{gpa_s2_m2:.2f}",
+        #     f"{gpa_s1_m3:.2f}",
+        #     f"{gpa_s2_m3:.2f}",
+        #     gpax5_str,
+        #     gpax6_str,
+        #     ", ".join(interests),
+        #     advice if interests else ""
+        # ]
+        row = [
+            name,
+            gender,
+            level,
+            fmt(gpa_s1_m1),
+            fmt(gpa_s2_m1),
+            fmt(gpa_s1_m2),
+            fmt(gpa_s2_m2),
+            fmt(gpa_s1_m3),
+            fmt(gpa_s2_m3),
+            gpax5_str,
+            gpax6_str,
+            ", ".join(interests),
+            advice if interests else ""
+        ]
+        sheet.append_row(row)
+        # edit 4
+        # df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        # df.to_csv(DATA_FILE, index=False, encoding='utf-8-sig')
         st.success("✅ บันทึกข้อมูลเรียบร้อยแล้ว")
     else:
         if not save_enabled:
@@ -943,7 +1032,7 @@ def main():
         z-index: 1000;
     ">
         <p style='margin: 0;'>ผู้พัฒนาและปรับปรุงระบบวิเคราะห์แนวทางการศึกษาตามความสนใจของผู้เรียน: <strong>ครูอัศวิน สุรวัชโยธิน</strong></p>
-        <p style='margin: 0;'>ระบบได้รับการปรับปรุงล่าสุด 17.10.25 : เพื่อเพิ่มประสิทธิภาพและความถูกต้องของคำแนะนำ</p>               
+        <p style='margin: 0;'>Guidance Academic System 1.2.0 ได้รับการปรับปรุงล่าสุด 22.12.25 : เพื่อเพิ่มประสิทธิภาพและความถูกต้องของคำแนะนำ</p>               
     </div>
     """, unsafe_allow_html=True)
 
