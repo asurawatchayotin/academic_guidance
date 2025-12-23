@@ -151,7 +151,7 @@ def setup_ui():
     st.markdown("""
     <div class="details-box">
     <details>
-    <summary>คำชี้แจง: การใช้งานระบบแนะแนวการศึกษา</summary>
+    <summary>คำชี้แจง: การใช้งานระบบแนะแนวการศึกษา (Academic Guidance Systems)</summary>
     <div style="margin-top:10px;">
         <p><strong>
         - วัตถุประสงค์ </strong> 
@@ -1206,7 +1206,7 @@ def main():
         z-index: 1000;
     ">
         <p style='margin: 0;'>ผู้พัฒนาและปรับปรุงระบบวิเคราะห์แนวทางการศึกษาตามความสนใจของผู้เรียน: <strong>ครูอัศวิน สุรวัชโยธิน</strong></p>
-        <p style='margin: 0;'>Guidance Academic Systems 1.2.0 | Last updated : 12.22.25 | เพื่อเพิ่มประสิทธิภาพและความถูกต้องของข้อมูลแนะนำ</p>               
+        <p style='margin: 0;'>Academic Guidance Systems 1.2.0 | Last updated : 12.22.25 | เพื่อเพิ่มประสิทธิภาพและความถูกต้องของข้อมูลแนะนำ</p>               
     </div>
     """, unsafe_allow_html=True)
 
