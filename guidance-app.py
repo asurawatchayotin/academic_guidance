@@ -1,5 +1,5 @@
 
-# Version 16 updated: 01.15.26
+# Version 16 updated: 01.16.26
 # Project objective
 # Provided services
 # Production-ready
@@ -1054,8 +1054,8 @@ def main():
     """, unsafe_allow_html=True)
 
     if st.button("💾 Saved info", disabled=not save_enabled):    
-        gpax5_str = f"{gpax_5:.2f}" if gpax_5 is not None else ""
-        gpax6_str = f"{gpax_6:.2f}" if gpax_6 is not None else ""
+        gpax5_str = f"{truncate(gpax_5):.2f}" if gpax_5 is not None else ""
+        gpax6_str = f"{truncate(gpax_6):.2f}" if gpax_6 is not None else ""
     
         row = [
             student_id,
