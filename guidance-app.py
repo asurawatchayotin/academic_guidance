@@ -851,8 +851,8 @@ def main():
             all_subjects_list[:i+1]
         )
         gpax_list.append(gpax_val)
-    st.write("DEBUG GPA LIST:", gpa_list)
-    st.write("DEBUG GPAX:", gpax_list)
+    # st.write("DEBUG GPA LIST:", gpa_list)
+    # st.write("DEBUG GPAX:", gpax_list)
 
     # -------------------------------
     # Plot graph GPAX
