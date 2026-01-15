@@ -1,5 +1,5 @@
 
-# Version 15 updated: 12.23.25
+# Version 16 updated: 01.15.26
 # Project objective
 # Provided services
 # Production-ready
@@ -59,6 +59,12 @@ def register_thai_font():
 
 def fmt(val):
     return f"{val:.2f}" if val is not None else ""
+
+def truncate(value, decimals=2):
+    if value is None:
+        return ""
+    factor = 10 ** decimals
+    return int(value * factor) / factor
 
 def setup_ui():
     st.markdown("""
@@ -132,6 +138,7 @@ def setup_ui():
     }
     </style>
     """, unsafe_allow_html=True)
+
 
 
         # --- Title Box ---
@@ -461,7 +468,7 @@ def render_semester_block(subjects_dict, extra_list, semester_label):
             text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
             margin-bottom: 15px;
         ">
-        🎯 เกรดเฉลี่ย {semester_label}: {gpa:.2f}
+        🎯 เกรดเฉลี่ย {semester_label}: {truncate(gpa):.2f}
         </div>
         """, unsafe_allow_html=True)
 
@@ -479,7 +486,7 @@ def render_semester_block(subjects_dict, extra_list, semester_label):
             text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
             margin-bottom: 15px;
         ">
-            📘 GPAX สะสมถึงเทอมนี้: {gpax_value:.2f}
+            📘 GPAX สะสมถึงเทอมนี้: {truncate(gpax_value):.2f}
         </div>
         """, unsafe_allow_html=True)
 
@@ -570,6 +577,19 @@ def plot_gpax_histogram(gpax_list, labels):
     st.pyplot(plt)
     plt.close()
 
+def calculate_gpax_from_grades(all_grades_list, all_subjects_list):
+    total_points = 0
+    total_credits = 0
+
+    for grades, subjects in zip(all_grades_list, all_subjects_list):
+        for code, grade in grades.items():
+            if grade is not None:
+                credit = subjects[code]["credit"]
+                total_points += grade * credit
+                total_credits += credit
+
+    return total_points / total_credits if total_credits > 0 else None
+
 def plot_gpa_gpax_bar(gpa_list, gpax_list, labels):
    
 
@@ -601,10 +621,10 @@ def plot_gpa_gpax_bar(gpa_list, gpax_list, labels):
     for color_idx, i in enumerate(idx_valid):
         if not np.isnan(gpa_vals[i]):
             plt.bar(x[i]-width/2, gpa_vals[i], width=width, color=colors_gpa[color_idx], edgecolor='black', label="GPA" if color_idx==0 else "")
-            plt.text(x[i]-width/2, gpa_vals[i]+0.05, f"{gpa_vals[i]:.2f}", ha='center', va='bottom', fontweight='bold')
+            plt.text(x[i]-width/2, gpa_vals[i]+0.05, f"{truncate(gpa_vals[i]):.2f}", ha='center', va='bottom', fontweight='bold')
         if not np.isnan(gpax_vals[i]):
             plt.bar(x[i]+width/2, gpax_vals[i], width=width, color=colors_gpax[color_idx], edgecolor='black', label="GPAX" if color_idx==0 else "")
-            plt.text(x[i]+width/2, gpax_vals[i]+0.05, f"{gpax_vals[i]:.2f}", ha='center', va='bottom', fontweight='bold')
+            plt.text(x[i]+width/2, gpax_vals[i]+0.05, f"{truncate(gpax_vals[i]):.2f}", ha='center', va='bottom', fontweight='bold')
 
     plt.ylim(0,4.0)
     plt.ylabel("GPA and GPAX")
@@ -631,104 +651,6 @@ def rule_based_advice(interests):
     else:
         return "ยังไม่สามารถระบุแนวทางได้!"
     
-# from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table
-# from reportlab.lib.styles import getSampleStyleSheet
-# from reportlab.lib.pagesizes import A4
-
-# def generate_pdf_report(    
-#     filename,
-#     student_id,
-#     name, gender, level,
-#     gpa_list, gpax_5, gpax_6,
-#     interests, advice,
-#     evaluator="ครูอัศวิน สุรวัชโยธิน"
-# ):
-#     gpax_list = [None, None, None, None, gpax_5, gpax_6]  # 6 เทอม
-
-#     register_thai_font()
-#     doc = SimpleDocTemplate(filename, pagesize=A4)
-#     styles = getSampleStyleSheet()
-#     styles.add(ParagraphStyle(
-#         name="Thai",
-#         fontName="THSarabun",
-#         fontSize=14,
-#         leading=18
-#     ))
-#     styles.add(ParagraphStyle(
-#         name="ThaiTitle",
-#         fontName="THSarabun",
-#         fontSize=20,
-#         leading=24,
-#         alignment=1  # center
-#     ))
-#     elements = []
-#     logo_path = os.path.join("assets", "logo.png")
-
-#     if os.path.exists(logo_path):
-#         logo = Image(logo_path, width=2.5*cm, height=2.5*cm)
-#         logo.hAlign = "CENTER"
-#         elements.append(logo)
-#         elements.append(Spacer(1, 12))
-#     else:
-#         print("⚠️ ไม่พบไฟล์โลโก้:", logo_path)
-#     elements.append(Paragraph("<b>Academic Guidance Report</b>", styles["ThaiTitle"]))
-#     elements.append(Spacer(1, 12))
-
-#     # ===============================
-#     # 🔹 วันที่ + ผู้ประเมิน
-#     # ===============================
-#     today = datetime.now().strftime("%d/%m/%Y")
-
-#     elements.append(Paragraph(f"วันที่ประเมิน: {today}", styles["Thai"]))
-#     elements.append(Paragraph(f"ผู้ประเมิน: {evaluator}", styles["Thai"]))
-#     elements.append(Spacer(1, 12))
-
-#     elements.append(Paragraph(f"รหัสนักเรียน: {student_id}", styles["Thai"]))
-#     elements.append(Paragraph(f"ชื่อ-สกุล: {name}", styles["Thai"]))
-#     elements.append(Paragraph(f"เพศ: {gender}", styles["Thai"]))
-#     elements.append(Paragraph(f"ระดับชั้น: {level}", styles["Thai"]))
-#     elements.append(Spacer(1, 12))
-
-
-#     # Report
-#     table_data = [["ภาคเรียน", "GPA", "GPAX"]]
-#     labels = [
-#         "ม.1/1", "ม.1/2",
-#         "ม.2/1", "ม.2/2",
-#         "ม.3/1", "ม.3/2"
-#     ]
-#     for i, lbl in enumerate(labels):
-#         gpa_val = gpa_list[i] if gpa_list[i] is not None else "-"
-#         gpax_val = gpax_list[i] if gpax_list[i] is not None else "-"       
-#         gpa_str = f"{gpa_val:.2f}" if isinstance(gpa_val, (float, int)) else gpa_val
-#         gpax_str = f"{gpax_val:.2f}" if isinstance(gpax_val, (float, int)) else gpax_val
-#         table_data.append([lbl, gpa_str, gpax_str])
-
-#     table = Table(table_data, hAlign="LEFT")
-#     table.setStyle(TableStyle([
-#         ("FONTNAME", (0, 0), (-1, -1), "THSarabun"),
-#         ("FONTSIZE", (0, 0), (-1, -1), 14),
-#         ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-#         ("ALIGN", (0, 0), (-1, 0), "CENTER"),
-#         ("ALIGN", (1, 1), (-1, -1), "CENTER"),
-#         ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-#         ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-#         ("TOPPADDING", (0, 0), (-1, -1), 6),
-#     ]))
-#     elements.append(table)
-#     elements.append(Spacer(1, 12))
-
-#     if gpax_5 is not None:
-#         elements.append(Paragraph(f"GPAX 5 เทอม: {gpax_5:.2f}", styles["Thai"]))
-#     if gpax_6 is not None:
-#         elements.append(Paragraph(f"GPAX 6 เทอม: {gpax_6:.2f}", styles["Thai"]))
-
-#     elements.append(Spacer(1, 12))
-#     elements.append(Paragraph(f"ความสนใจ: {', '.join(interests) if interests else '-'}", styles["Thai"]))
-#     elements.append(Paragraph(f"ผลแนะแนว: {advice if advice else '-'}", styles["Thai"]))
-
-#     doc.build(elements)
-
 def generate_pdf_report(
     filename,
     student_id,
@@ -784,8 +706,8 @@ def generate_pdf_report(
         gpa_val = gpa_list[i] if i < len(gpa_list) else None
         gpax_val = gpax_list[i] if i < len(gpax_list) else None
 
-        gpa_str = f"{gpa_val:.2f}" if isinstance(gpa_val, (float, int)) else "-"
-        gpax_str = f"{gpax_val:.2f}" if isinstance(gpax_val, (float, int)) else "-"
+        gpa_str = f"{truncate(gpa_val):.2f}" if isinstance(gpa_val, (float, int)) else "-"
+        gpax_str = f"{truncate(gpax_val):.2f}" if isinstance(gpax_val, (float, int)) else "-"
         table_data.append([lbl, gpa_str, gpax_str])
 
     table = Table(table_data, hAlign="LEFT")
@@ -874,8 +796,6 @@ def main():
         subjects_s2_m1, extra_subjects_s2_m1, "ม.1 ภาคเรียนที่ 2" # semester_label
     )
 
-  
-
     # Semester 1 block (แสดง section base แล้ว extra ต่อจาก อ 22101)
     gpa_s1_m2, grades_s1_m2_all, subs_s1_m2_all, filled_s1_m2, gpax_s1_m2 = render_semester_block(
         subjects_s1_m2, extra_subjects_s1_m2, "ม.2 ภาคเรียนที่ 1" # semester_label
@@ -885,7 +805,6 @@ def main():
     gpa_s2_m2, grades_s2_m2_all, subs_s2_m2_all, filled_s2_m2, gpax_s2_m2 = render_semester_block(
         subjects_s2_m2, extra_subjects_s2_m2, "ม.2 ภาคเรียนที่ 2" # semester_label
     )
-    
 
     # Semester 1 block (แสดง section base แล้ว extra ต่อจาก อ 23101)
     gpa_s1_m3, grades_s1_m3_all, subs_s1_m3_all, filled_s1_m3, gpax_s1_m3 = render_semester_block(
@@ -896,24 +815,47 @@ def main():
     gpa_s2_m3, grades_s2_m3_all, subs_s2_m3_all, filled_s2_m3, gpax_s2_m3 = render_semester_block(
         subjects_s2_m3, extra_subjects_s2_m3, "ม.3 ภาคเรียนที่ 2"  # semester_label
     )
-    
-    # gpa_list = []
-    gpa_list = [gpa_s1_m1, gpa_s2_m1, gpa_s1_m2, gpa_s2_m2, gpa_s1_m3, gpa_s2_m3]
+
+    # ===== หลัง render ครบทุกเทอม =====
+    gpa_list = [
+        gpa_s1_m1,
+        gpa_s2_m1,
+        gpa_s1_m2,
+        gpa_s2_m2,
+        gpa_s1_m3,
+        gpa_s2_m3
+    ]
+
+    all_grades_list = [
+        grades_s1_m1_all,
+        grades_s2_m1_all,
+        grades_s1_m2_all,
+        grades_s2_m2_all,
+        grades_s1_m3_all,  
+        grades_s2_m3_all
+    ]
+
+    all_subjects_list = [
+        subs_s1_m1_all,
+        subs_s2_m1_all,
+        subs_s1_m2_all,
+        subs_s2_m2_all,
+        subs_s1_m3_all,    
+        subs_s2_m3_all
+    ]
 
     gpax_list = []
-    for i, g in enumerate(gpa_list):
-        if g is not None:
-            # คำนวณเฉลี่ยสะสมของเทอมที่กรอกแล้ว
-            filled_gpa = [x for x in gpa_list[:i+1] if x is not None]
-            gpax_value = sum(filled_gpa) / len(filled_gpa)
-        else:
-            # ถ้ายังไม่ได้กรอก → GPAX เป็น None
-            gpax_value = None
-        gpax_list.append(gpax_value)
-
+    for i in range(len(all_grades_list)):
+        gpax_val = calculate_gpax_from_grades(
+            all_grades_list[:i+1],
+            all_subjects_list[:i+1]
+        )
+        gpax_list.append(gpax_val)
+    st.write("DEBUG GPA LIST:", gpa_list)
+    st.write("DEBUG GPAX:", gpax_list)
 
     # -------------------------------
-    # แสดงกราฟ GPAX
+    # Plot graph GPAX
     # -------------------------------
     # semester_labels_list = ["ม.1 เทอม1", "ม.1 เทอม2", "ม.2 เทอม1", "ม.2 เทอม2", "ม.3 เทอม1", "ม.3 เทอม2"]
     semester_labels_list = ["M1 TERM 1", "M1 TERM  2", "M2 TERM 1", "M2 TERM 2", "M3 TERM 1", "M3 TERM 2"]
@@ -924,10 +866,9 @@ def main():
 
         if gpa is not None:
             gpax_val = gpax_list[i]
-            gpa_str = f"{gpa:.2f}"
-            gpax_str = f"{gpax_val:.2f}"
+            gpa_str = f"{truncate(gpa):.2f}"
+            gpax_str = f"{truncate(gpax_val):.2f}"
 
-            # ใช้สีพื้น และเส้นซ้ายดูเหมือนการ์ด
             summary_text += f"""
             
     <div style="
@@ -983,9 +924,7 @@ def main():
             [gpa_s1_m1, gpa_s2_m1, gpa_s1_m2, gpa_s2_m2, gpa_s1_m3, gpa_s2_m3],
             [subs_s1_m1_all, subs_s2_m1_all, subs_s1_m2_all, subs_s2_m2_all, subs_s1_m3_all, subs_s2_m3_all]
         )
-
-        
-
+   
         # -------------------------------
         # Academic plan recommendation
         # -------------------------------
@@ -1135,19 +1074,11 @@ def main():
             advice if interests else ""
         ]
         sheet.append_row(row)
-        # edit 4
-        # df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-        # df.to_csv(DATA_FILE, index=False, encoding='utf-8-sig')
         st.success("✅ บันทึกข้อมูลเรียบร้อยแล้ว")
     else:
         if not save_enabled:            
             st.info("ℹ️ กรุณากรอกข้อมูลครบทุกช่องก่อนบันทึก")
     
-    # ===============================
-    # Export / Report Section
-    # ===============================
-    # st.markdown("---")
-    # st.subheader("📄 Export รายงาน")
     can_export = bool(
         name
         and has_any_gpa
