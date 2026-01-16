@@ -1084,13 +1084,6 @@ def main():
         and has_any_gpa
         # and advice
     )
-    gpax_1 = gpax_s1_m1 or None
-    gpax_2 = gpax_s2_m1 or None
-    gpax_3 = gpax_s1_m2 or None
-    gpax_4 = gpax_s2_m2 or None
-    gpax_5 = gpax_s1_m3 or None
-    gpax_6 = gpax_s2_m3 or None
-    gpax_list = [gpax_1, gpax_2, gpax_3, gpax_4, gpax_5, gpax_6]
     gpa_list = [gpa_s1_m1, gpa_s2_m1, gpa_s1_m2, gpa_s2_m2, gpa_s1_m3, gpa_s2_m3]
 
     if st.button("📄 Export PDF Report", disabled=not can_export):
@@ -1101,9 +1094,9 @@ def main():
             student_id=student_id,
             name=name,
             gender=gender,
-            level=level,           
+            level=level,
             gpa_list=gpa_list,
-            gpax_list = gpax_list,          
+            gpax_list=gpax_list,
             interests=interests,
             advice=advice
         )
@@ -1137,7 +1130,7 @@ def main():
         z-index: 1000;
     ">
         <p style='margin: 0;'>ผู้พัฒนาและปรับปรุงระบบแนะแนวการศึกษาตามความสนใจของผู้เรียน: <strong>ครูอัศวิน สุรวัชโยธิน</strong></p>
-        <p style='margin: 0;'>Academic Guidance Systems 1.2.0 | Last updated : 12.22.25 | เพื่อเพิ่มประสิทธิภาพและความถูกต้องของข้อมูลแนะนำ</p>               
+        <p style='margin: 0;'>Academic Guidance Systems 1.2.0 | Last updated : 01.20.26 | เพื่อเพิ่มประสิทธิภาพและความถูกต้องของข้อมูลแนะนำ</p>               
     </div>
     """, unsafe_allow_html=True)
 
