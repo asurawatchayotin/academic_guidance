@@ -989,13 +989,13 @@ def main():
                 # st.warning("⚠️ ยังไม่ผ่านเกณฑ์ของทุกแผนการเรียน โปรดปรับปรุงผลการเรียนในบางวิชา")
                 st.markdown("""
                 <div style="
-                    background-color:#1B3C53;
+                    background-color:#FF4646;
                     color:#FFFFFF;
                     padding:10px;
                     border-radius:8px;
                     font-weight:bold;
                 ">
-                ⚠️ ยังไม่ผ่านเกณฑ์ของทุกแผนการเรียน โปรดปรับปรุงผลการเรียนในบางวิชา
+                ⚠️ ยังไม่ผ่านเกณฑ์ของทุกแผนการเรียน โปรดปรับปรุงผลการเรียนในบางวิชา<br>
                 </div>
                 """, unsafe_allow_html=True)
 
