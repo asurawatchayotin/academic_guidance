@@ -1040,7 +1040,7 @@ def main():
             "พ": "สุขศึกษาและพลศึกษา",
             "ศ": "ศิลปะ ดนตรีและนาฏศิลป์",
             "ง": "การงานอาชีพ",
-            "อ": "ภาษาอังกฤษ",
+            "อ": "ภาษาต่างประเทศ",
         }
         for pfx, val in prefix_avg.items():
             subject_name = prefix_name_map.get(pfx, pfx)
