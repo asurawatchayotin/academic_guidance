@@ -937,18 +937,28 @@ def main():
             grades_s2_m3_all
         ]
 
-        # คำนวณค่าเฉลี่ย prefix (index 0)
-        prefix_sum = {}
-        prefix_count = {}
-        for semester in all_semesters:
-            for code, grade in semester.items():
+        # ---------- คำนวณค่าเฉลี่ย 8 กลุ่มสาระแบบถ่วงน้ำหนักด้วยหน่วยกิต ----------
+        prefix_points = {}
+        prefix_credits = {}
+
+        for grades, subjects in zip(all_grades_list, all_subjects_list):
+            for code, grade in grades.items():
                 if grade is not None:
-                    prefix = code.split()[0]  # index 0
-                    prefix_sum[prefix] = prefix_sum.get(prefix, 0) + grade
-                    prefix_count[prefix] = prefix_count.get(prefix, 0) + 1
+                    prefix = code.split()[0]
+                    credit = subjects[code]["credit"]
 
-        prefix_avg = {k: prefix_sum[k]/prefix_count[k] for k in prefix_sum}
+                    # รวมจีนเข้าอังกฤษ
+                    if prefix == "จ":
+                        prefix = "อ"
 
+                    prefix_points[prefix] = prefix_points.get(prefix, 0) + grade * credit
+                    prefix_credits[prefix] = prefix_credits.get(prefix, 0) + credit
+
+        prefix_avg = {
+            pfx: prefix_points[pfx] / prefix_credits[pfx]
+            for pfx in prefix_points
+        }
+        
         # ตรวจสอบเงื่อนไขแต่ละแผน
         rec_plans = []
         if prefix_avg.get("ค", 0) >= 2.50 and prefix_avg.get("อ", 0) >= 2.50:
@@ -1009,7 +1019,8 @@ def main():
         # -------------------------------
         # Display prefix average
         # -------------------------------
-        st.markdown("**📊 ค่าเฉลี่ยรายหมวดวิชา:**")
+        # st.markdown("**📊 ค่าเฉลี่ยรายหมวดวิชา:**")
+        st.markdown("**📊 ผลการเรียนเฉลี่ยสะสม (GPAX) แยกตามกลุ่มสาระการเรียนรู้ (6 ภาคเรียน)**")
         prefix_name_map = {
             "ท": "ภาษาไทย",
             "ค": "คณิตศาสตร์",
@@ -1019,12 +1030,11 @@ def main():
             "ศ": "ศิลปะ ดนตรีและนาฏศิลป์",
             "ง": "การงานอาชีพ",
             "อ": "ภาษาอังกฤษ",
-            "จ": "ภาษาจีน",
         }
         for pfx, val in prefix_avg.items():
             subject_name = prefix_name_map.get(pfx, pfx)
-            st.write(f"• กลุ่มรายวิชา {subject_name}:   ได้ค่าเฉลี่ย {val:.2f}")
-
+            # st.write(f"• กลุ่มรายวิชา {subject_name}:   ได้ค่าเฉลี่ย {val:.2f}")
+            st.write(f"• กลุ่มสาระวิชา {subject_name}:   ได้ค่าเฉลี่ย {truncate(val):.2f}")
 
     save_enabled = bool(
         name and gender and level and has_any_gpa
