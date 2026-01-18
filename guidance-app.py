@@ -986,7 +986,18 @@ def main():
                 for plan in rec_plans:
                     st.info(plan)
             else:
-                st.warning("⚠️ ยังไม่ผ่านเกณฑ์ของทุกแผนการเรียน โปรดปรับปรุงผลการเรียนในบางวิชา")
+                # st.warning("⚠️ ยังไม่ผ่านเกณฑ์ของทุกแผนการเรียน โปรดปรับปรุงผลการเรียนในบางวิชา")
+                st.markdown("""
+                <div style="
+                    background-color:#E3F2FD;
+                    color:#0D47A1;
+                    padding:10px;
+                    border-radius:8px;
+                    font-weight:bold;
+                ">
+                ⚠️ ยังไม่ผ่านเกณฑ์ของทุกแผนการเรียน โปรดปรับปรุงผลการเรียนในบางวิชา
+                </div>
+                """, unsafe_allow_html=True)
 
             # Card สำหรับความสนใจ
 
