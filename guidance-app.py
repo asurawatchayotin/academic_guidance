@@ -661,7 +661,7 @@ def generate_pdf_report(
     gpax_list,       # list ของ GPAX 6 เทอม
     interests,
     advice,
-    evaluator="ครูอัศวิน สุรวัชโยธิน"
+    evaluator="ครูกิศนันท์ ศรีชนะพันธ์"
 ):
     register_thai_font()
     doc = SimpleDocTemplate(filename, pagesize=A4)
