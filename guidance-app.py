@@ -35,6 +35,10 @@ plt.rcParams['axes.unicode_minus'] = False
 
 st.set_page_config(page_title="Academic Guidance System", page_icon="images/icon2.png", layout="centered")
 
+st.title("The system is temporarily down for maintenance.")
+st.write("We apologize for any inconvenience.")
+st.stop()
+
 @st.cache_resource
 def get_gsheet():
     scope = [
